@@ -15,7 +15,7 @@ int main()
 
 	// Initialisation de la bibliotheque
 	// ...
-
+int test;
     do
     {
 		// Gestion du menu.
