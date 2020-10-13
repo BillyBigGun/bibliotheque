@@ -22,9 +22,8 @@ typedef enum { AUCUN = 0, FICTION = 1, HISTOIRE = 2, SCIENCE = 3, ENFANTS = 4, I
 
 typedef struct
 {
-
-	// à compléter.
-
+	int nb_livre;
+	int nb_emprunts;
 } t_rapport;
 
 typedef struct

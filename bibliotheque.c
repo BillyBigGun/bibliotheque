@@ -7,9 +7,12 @@
 
 int main()
 {
+	
 	// Déclaration des variables.
-	// ...
-    
+	int choix_menu;
+	t_bibliotheque bibli;
+
+	
 	// Initialisation de la fonction rand()
 	srand(time(NULL));
 
@@ -18,6 +21,7 @@ int main()
 int test;
     do
     {
+		
 		// Gestion du menu.
         choix_menu = demander_choix_menu();
 
@@ -25,8 +29,8 @@ int test;
         {
             case 1: afficher_bibliotheque(&bibli); break;
             case 2: lire_fichier(&bibli); break;
-            case 3: modifier_livre(&bibli); break;
-			case 4: retirer_livre(&bibli); break;
+           // case 3: modifier_livre(&bibli); break;
+			//case 4: retirer_livre(&bibli); break;
             case 5: emprunter_livre(&bibli); break;
             case 6: gerer_retours(&bibli); break;
             case 7: generer_rapport(&bibli); break;
@@ -106,4 +110,67 @@ void retirer_sautligne(char * chaine)
 	int pos = strlen(chaine) - 1;
 	if (chaine != NULL && chaine[pos] == '\n')
 		chaine[pos] = '\0'; // Si on trouve \n à la fin, on le remplace par \0
+}
+void initialiser_livre(t_livre* pLivre)
+{
+	pLivre->genre = AUCUN;
+	strcpy(pLivre->titre, " N/A");
+	strcpy(pLivre->auteur_prenom, "N/A");
+	strcpy(pLivre->auteur_nom, "N/A");
+	pLivre->nb_pages = 0;
+	pLivre->isbn = -1;
+	pLivre->bEmprunte = DISPONIBLE;
+}
+void initialiser_bibliotheque(t_bibliotheque* pBibli)
+{
+	for (int i = 0; i < NB_GENRES; ++i) {
+		(*pBibli).nb_livres[i] = 0;
+		for (int j = 0; j < NB_LIVRES_MAX_RANGEE; ++j) {
+			t_livre livreInitial;
+			initialiser_livre(&livreInitial);
+			(*pBibli).livres[i][j] = livreInitial;
+		}
+	}
+
+	initialiser_rapport(&(pBibli->rapport));
+}
+
+
+void initialiser_rapport(t_rapport* pRapport)
+{
+	pRapport->nb_emprunts = 0;
+	pRapport->nb_livre = 0;
+}
+void sauvegarder_fichier(t_bibliotheque* pBibli)
+{
+
+}
+
+void trier_livres(t_bibliotheque* pBibli)
+{
+
+}
+
+void afficher_bibliotheque(t_bibliotheque* pBibli)
+{
+
+}
+
+void generer_rapport(t_bibliotheque* pBibli)
+{
+
+}
+
+void emprunter_livre(t_bibliotheque* pBibli)
+{
+
+}
+
+void gerer_retours(t_bibliotheque* pBibli)
+{
+
+}
+int demander_choix_menu()
+{
+
 }
