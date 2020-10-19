@@ -20,7 +20,7 @@ int main()
 	initialiser_bibliotheque(&bibli);
 	simuler_lire_fichier(&bibli);
 	afficher_bibliotheque(&bibli);
-	afficher_livre(bibli.livres[INFORMATIQUE][0]);
+
 	
 	
 	// ...
@@ -187,18 +187,24 @@ void retirer_livre(t_bibliotheque* pBibli)
 	int livre_trouve = 0;
 	int i;
 	int j;
+	int temp_i;
+	int temp_j;
 	for ( i = 0; i < NB_GENRES; ++i) {
 		for ( j = 0; j < pBibli->nb_livres[i]; ++j) {
 			if ((pBibli->livres[i][j]).isbn == ISBN) {
 				livre = pBibli->livres[i][j];
-				
+				temp_i = i;
+				temp_j = j;
 				livre_trouve = 1;
+				break;
 			}
 		}
 	}
 	// decaler le tableau et "ecraser" le livre retire par le fait meme
 	if (livre_trouve==1)
-	{ 
+	{
+		i = temp_i;
+		j = temp_j;
 
 		for (j; j < pBibli->nb_livres[i]; ++j)
 		{
@@ -207,8 +213,6 @@ void retirer_livre(t_bibliotheque* pBibli)
 			{
 				initialiser_livre(&(pBibli->livres[i][NB_LIVRES_MAX_RANGEE-1]));
 				
-				pBibli->nb_livres[i]--;
-				return;
 			}
 			else
 			{ 
