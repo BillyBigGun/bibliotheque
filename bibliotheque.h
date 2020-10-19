@@ -68,5 +68,9 @@ void gerer_retours(t_bibliotheque * pBibli);
 
 void retirer_sautligne(char * chaine);
 void super_pause();
+void afficher_livre(t_livre livre);// pour afficher un livre[x][y] dans la bibliotheque
+t_livre* trouver_livre(t_bibliotheque* pBibli, int isbn);
+void retirer_livre(t_bibliotheque* pBibli);
+void modifier_livre(t_bibliotheque* bibli);
 
 #endif
