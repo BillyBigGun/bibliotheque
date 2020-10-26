@@ -5,6 +5,9 @@
 #include <string.h>
 #include "bibliotheque.h"
 
+
+
+
 int main()
 {
 	
@@ -18,8 +21,11 @@ int main()
 
 	// Initialisation de la bibliotheque
 	initialiser_bibliotheque(&bibli);
-	simuler_lire_fichier(&bibli);
+	lire_fichier(&bibli);
 	afficher_bibliotheque(&bibli);
+
+	
+	
 
 	
 	
@@ -52,20 +58,128 @@ int main()
 
 void lire_fichier(t_bibliotheque * pBibli)
 {
-	// ...
+	FILE* fichier = NULL;
 
-#if(SIMULATION == 1)
-    simuler_lire_fichier(pBibli);
-	
-	// ...
+	fichier = fopen("biblio.txt", "r");
+
+#if(SIMULATION == 0)
+	simuler_lire_fichier(pBibli);
+
 
 #else
-    
-	// ...
-    
-#endif
+	if (fichier != NULL)
+	{
+		int caractere = 0;
+		int indiceChar = 0;
+		int indiceLivre = -1;
+		int premiereLigne = 1;
+		int sauvegarderBibli = 0; //Eviter de sauvegarder un livre null
+		int indiceLivreData = 0;
 
-	// ...
+		int nbNewLineSuite = 0;
+		char newLine = '\n';
+
+		char ligne[TAILLE_MAX_LIGNE] = "";
+
+
+
+		t_livre* livres = NULL;
+		do
+		{
+			caractere = fgetc(fichier);
+			//Si c'est un saut de ligne on reinitialise
+			if (caractere == newLine) {
+				nbNewLineSuite++;
+				//Premiere ligne du fichier
+				if (premiereLigne == 1) {
+					premiereLigne = 0;
+
+					//Determine le interger lu
+					int chiffre = (int)((ligne[0] - '0'));
+
+					//Cree le tableau de livres
+					livres = (t_livre*)malloc(chiffre * sizeof(t_livre));
+				}
+				//Deux newline de suite = nouveau livre
+				else if (nbNewLineSuite == 2) {
+					if (sauvegarderBibli) {
+						//Enregistrer le livre dans la bibli
+						int genre = livres[indiceLivre].genre;
+						pBibli->livres[genre][pBibli->nb_livres[genre]] = livres[indiceLivre];
+						pBibli->nb_livres[genre]++;
+
+						
+						indiceLivreData = 0;
+					}
+					sauvegarderBibli = 1; // apres le premier double saut dans le fichier on peut sauvegarder bibli
+					indiceLivre++;
+				}
+				else if (indiceLivre >= 0)
+				{
+					//Determiner quelle donnee changer
+					// atoi --> convert string to int
+					switch (indiceLivreData)
+					{
+						//genre
+					case 0:
+						livres[indiceLivre].genre = atoi(ligne);
+						break;
+						//titre
+					case 1:
+						strcpy(livres[indiceLivre].titre, ligne);
+						break;
+						//prenom
+					case 2:
+						strcpy(livres[indiceLivre].auteur_prenom, ligne);
+						break;
+						//Nom
+					case 3:
+						strcpy(livres[indiceLivre].auteur_nom, ligne);
+						break;
+						//nb Pages
+					case 4:
+						livres[indiceLivre].nb_pages = atoi(ligne);
+						break;
+						//Isbn
+					case 5:
+
+						livres[indiceLivre].isbn = atoi(ligne);
+						break;
+						// disponibilitee
+					case 6:
+						livres[indiceLivre].bEmprunte = atoi(ligne);
+						break;
+					default:
+						break;
+					}
+					indiceLivreData++;
+				}
+				//Reinitialiser
+				memset(ligne, 0, sizeof(ligne));
+				indiceChar = 0;
+			}
+			// On ajoute le caractere dans la ligne
+			else
+			{
+				nbNewLineSuite = 0;
+				ligne[indiceChar++] = caractere;
+			}
+
+
+		} while (caractere != EOF);
+
+
+		fclose(fichier);
+	}
+	else
+	{
+		// message d'erreur
+		printf("Impossible d'ouvrir le fichier bibli.txt");
+	}
+
+
+#endif
+	
 }
 
 void simuler_lire_fichier(t_bibliotheque * pBibli)
@@ -174,7 +288,40 @@ void afficher_bibliotheque(t_bibliotheque* pBibli)
 
 void generer_rapport(t_bibliotheque* pBibli)
 {
+	
+	initialiser_rapport(&(pBibli->rapport));//initialiser pour ne pas voir le double a chaque fois quon genere le rapport
 
+	int i;
+	int j;
+	
+	
+	int nb_livre_total=0;
+	for (i = 0; i < NB_GENRES; ++i)
+	{
+		
+		pBibli->rapport.nb_livre += pBibli->nb_livres[i];// rajoute le nb de livre dans XY genre 
+	}
+
+	int nb_emprunt_total=0;
+
+for (i = 0; i < NB_GENRES; ++i) {
+		for (j = 0; j < pBibli->nb_livres[i]; ++j) {
+			if ((pBibli->livres[i][j]).bEmprunte == EMPRUNT) 
+			{
+				
+			
+
+			pBibli->rapport.nb_emprunts += 1;// si un livre est emprunte, le nb_emprunts +=1
+			
+			}
+		}
+	}
+
+
+	printf("\n#################\n");
+	printf("Nb de livres: %d\n", pBibli->rapport.nb_livre);
+	printf("Nb Emprunts: %d\n", pBibli->rapport.nb_emprunts);
+	printf("#################\n");  //affichage du rapport
 }
 void retirer_livre(t_bibliotheque* pBibli)
 {

@@ -10,6 +10,7 @@
 #define TAILLE_TITRE	80
 #define TAILLE_NOM		30	
 #define TAILLE_PRENOM	30
+#define TAILLE_MAX_LIGNE 100
 
 #define MAX_ISBN		9999
 
