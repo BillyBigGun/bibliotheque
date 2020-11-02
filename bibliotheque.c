@@ -17,7 +17,7 @@ int main()
 
 	
 	// Initialisation de la fonction rand()
-	srand(time(NULL));
+	//srand(time(NULL));
 
 	// Initialisation de la bibliotheque
 	initialiser_bibliotheque(&bibli);
@@ -59,8 +59,8 @@ int main()
 void lire_fichier(t_bibliotheque * pBibli)
 {
 	FILE* fichier = NULL;
-
 	fichier = fopen("biblio.txt", "r");
+	
 
 #if(SIMULATION == 0)
 	simuler_lire_fichier(pBibli);
@@ -87,7 +87,7 @@ void lire_fichier(t_bibliotheque * pBibli)
 		do
 		{
 			caractere = fgetc(fichier);
-			//Si c'est un saut de ligne on reinitialise
+			//Si c'est un saut de ligne on sauvegarde les donnee et on reinitialise les variable
 			if (caractere == newLine) {
 				nbNewLineSuite++;
 				//Premiere ligne du fichier
@@ -95,10 +95,11 @@ void lire_fichier(t_bibliotheque * pBibli)
 					premiereLigne = 0;
 
 					//Determine le interger lu
-					int chiffre = (int)((ligne[0] - '0'));
-
+					int chiffre = atoi((ligne));
+					printf("%d\n", chiffre);
 					//Cree le tableau de livres
 					livres = (t_livre*)malloc(chiffre * sizeof(t_livre));
+					
 				}
 				//Deux newline de suite = nouveau livre
 				else if (nbNewLineSuite == 2) {
@@ -111,7 +112,7 @@ void lire_fichier(t_bibliotheque * pBibli)
 						
 						indiceLivreData = 0;
 					}
-					sauvegarderBibli = 1; // apres le premier double saut dans le fichier on peut sauvegarder bibli
+					sauvegarderBibli = 1; // apres le premier double saut dans le fichier on peut sauvegarder bibli (pcq le premier double saut est pour le nb de livres)
 					indiceLivre++;
 				}
 				else if (indiceLivre >= 0)
@@ -168,15 +169,16 @@ void lire_fichier(t_bibliotheque * pBibli)
 
 		} while (caractere != EOF);
 
-
-		fclose(fichier);
+		free(livres);
+		
 	}
 	else
 	{
 		// message d'erreur
-		printf("Impossible d'ouvrir le fichier bibli.txt");
+		printf("Impossible d'ouvrir le fichier biblio.txt");
 	}
 
+	//fclose(fichier);
 
 #endif
 	
@@ -222,7 +224,7 @@ void simuler_lire_fichier(t_bibliotheque * pBibli)
 void super_pause()
 {
 	printf("Appuyez sur une touche pour continuer! \n");
-	_getch();
+	//_getch();
 }
 
 void retirer_sautligne(char * chaine)
@@ -263,14 +265,73 @@ void initialiser_rapport(t_rapport* pRapport)
 	pRapport->nb_emprunts = 0;
 	pRapport->nb_livre = 0;
 }
+
 void sauvegarder_fichier(t_bibliotheque* pBibli)
 {
+	FILE* fichier = NULL;
+
+	fichier = fopen("biblio.txt", "w");
+
+	if (fichier != NULL)
+	{
+		// Determiner le nombre de livre
+		int nbLivres = 0;
+		for(int i =0; i < NB_GENRES; ++i)
+		{
+			nbLivres += pBibli->nb_livres[i];
+		}
+		//Ecrire le nb livre
+		fprintf(fichier, "%d\n\n", nbLivres);
+
+		//Iterer sur tous les livres de la bibliotheque et les sauvegarders
+		for (int i = 0; i < NB_GENRES; ++i) 
+		{
+			int nbLivreGenre = pBibli->nb_livres[i];
+			for (int j = 0; j < nbLivreGenre; ++j) 
+			{
+				t_livre livre = pBibli->livres[i][j];
+				fprintf(fichier, "%d\n", livre.genre);
+				fprintf(fichier, "%s\n", livre.titre);
+				fprintf(fichier, "%s\n", livre.auteur_prenom);
+				fprintf(fichier, "%s\n", livre.auteur_nom);
+				fprintf(fichier, "%d\n", livre.nb_pages);
+				fprintf(fichier, "%d\n", livre.isbn);
+				fprintf(fichier, "%d\n\n", livre.bEmprunte);
+			}
+		}
+
+		printf("La sauvegarde de la bibli a bien fonctionnee\n");
+	}
+	else
+	{
+		// message d'erreur
+		printf("Impossible d'ouvrir le fichier biblio.txt\n");
+	}
+	fclose(fichier);
 
 }
 
+//Trier selon le isbn
 void trier_livres(t_bibliotheque* pBibli)
 {
+	for (int i = 0; i < NB_GENRES; i++)
+	{
+		//Trier dans chaque genre
+		for (int j = 0; j < pBibli->nb_livres[i]; j++)
+		{
+			t_livre plusPetit = pBibli->livres[i][j];
+			for(int k = 1; k < pBibli->nb_livres[i]; ++k)
+			{
+				//si le livre actuel est plus petit, on swap
+				if(pBibli->livres[i][k].isbn < plusPetit.isbn)
+				{
+					t_livre temp = plusPetit;
+					pBibli->livres[i][k] = temp;
 
+				}
+			}
+		}
+	}
 }
 
 void afficher_bibliotheque(t_bibliotheque* pBibli)
@@ -379,6 +440,7 @@ void retirer_livre(t_bibliotheque* pBibli)
 
 	//----------------------------------------------
 }
+
 void emprunter_livre(t_bibliotheque* pBibli)
 {
 
@@ -390,31 +452,99 @@ void emprunter_livre(t_bibliotheque* pBibli)
 		t_livre* livre = trouver_livre(pBibli, isbn);
 		if (livre != NULL)
 			livre->bEmprunte = 1;
-	}
+}
 
-	t_livre* trouver_livre(t_bibliotheque * bibli, int isbn)
-	{
-		t_livre* livre = NULL;
-		int livre_trouve = 0;
-		for (int i = 0; i < NB_GENRES; ++i) {
-			for (int j = 0; j < bibli->nb_livres[i]; ++j) {
-				if ((bibli->livres[i][j]).isbn == isbn) {
-					//Pointer du livre
-					livre = &(bibli->livres[i][j]);
-					livre_trouve = 1;
-					break;
-				}
+t_livre* trouver_livre(t_bibliotheque * bibli, int isbn)
+{
+	t_livre* livre = NULL;
+	int livre_trouve = 0;
+	for (int i = 0; i < NB_GENRES; ++i) {
+		for (int j = 0; j < bibli->nb_livres[i]; ++j) {
+			if ((bibli->livres[i][j]).isbn == isbn) {
+				//Pointer du livre
+				livre = &(bibli->livres[i][j]);
+				livre_trouve = 1;
+				break;
 			}
 		}
-		return livre;
-	
-
+	}
+	return livre;
 }
 
 void gerer_retours(t_bibliotheque* pBibli)
 {
+	gerer_lundi_matin_retours(pBibli, &(pBibli->retours));
+	retourner_livres(pBibli, &(pBibli->retours));
+}
+
+void gerer_lundi_matin_retours(t_bibliotheque* bibli, t_pile* pPileRetours)
+{
+	//regarder tous les livres de la bibli
+	for (int i = 0; i < NB_GENRES; ++i) {
+		for (int j = 0; j < bibli->nb_livres[i]; ++j) {
+			if ((bibli->livres[i][j]).bEmprunte == EMPRUNT) {
+				//empiler le livre qui a ete emprunte
+
+				empiler(pPileRetours, &(bibli->livres[i][j]));
+
+			}
+		}
+	}
 
 }
+void retourner_livres(t_bibliotheque* bibli, t_pile* pPileRetours)
+{
+	
+		if (pPileRetours == NULL)
+		{
+			return;
+		}
+		t_livre* actuel = pPileRetours->premier;
+
+		while (actuel != NULL)
+		{
+			actuel->bEmprunte = DISPONIBLE;
+			depiler(pPileRetours);
+		}
+	
+}
+
+void init_pile(t_pile* pile)
+{
+	pile->premier = NULL;
+}
+	
+void empiler(t_pile* pile, t_livre *livre)
+{
+		
+	if (pile == NULL )
+	{	
+		printf("probleme pile ");
+		return;
+	}
+
+		//gestion de la pile
+		livre->suivant = pile->premier;
+		pile->premier = livre;
+			
+}
+
+t_livre* depiler(t_pile* pile)
+{
+	if (pile == NULL || pile->premier == NULL)
+	{
+		printf("probleme depile");
+		return NULL;
+	}
+	
+	//gestion de la pile
+	t_livre* livre_1;
+	livre_1 = pile->premier;
+	pile->premier = pile->premier->suivant;
+	return livre_1;
+}
+
+
 int demander_choix_menu()
 {
 	

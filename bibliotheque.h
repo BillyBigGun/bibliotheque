@@ -27,7 +27,8 @@ typedef struct
 	int nb_emprunts;
 } t_rapport;
 
-typedef struct
+typedef struct t_livre t_livre;
+struct t_livre
 {
 	t_genre genre;
 	int nb_pages;
@@ -36,15 +37,24 @@ typedef struct
 	char titre[TAILLE_TITRE];
 	int isbn;
 	int bEmprunte; // 1: Le livre a ete emprunte, 0: le livre est disponible.
-} t_livre;
+	t_livre * suivant;
+};
+
+typedef struct 
+{
+	t_livre * premier;
+} t_pile;
+
 
 typedef struct
 {
 	t_livre livres[NB_GENRES][NB_LIVRES_MAX_RANGEE];
 	int nb_livres[NB_GENRES];
-	//t_pile retours;
+	t_pile retours;
 	t_rapport rapport;
 } t_bibliotheque;
+
+
 
 int demander_choix_menu();
 
@@ -73,5 +83,13 @@ void afficher_livre(t_livre livre);// pour afficher un livre[x][y] dans la bibli
 t_livre* trouver_livre(t_bibliotheque* pBibli, int isbn);
 void retirer_livre(t_bibliotheque* pBibli);
 void modifier_livre(t_bibliotheque* bibli);
+
+//Pile
+void gerer_retours(t_bibliotheque* pBibli);
+void gerer_lundi_matin_retours(t_bibliotheque* bibli, t_pile* pPileRetours);
+void retourner_livres(t_bibliotheque* bibli, t_pile* pPileRetours);
+void init_pile(t_pile* pile);
+void empiler(t_pile* pile, t_livre *livre);
+t_livre* depiler(t_pile* pile);
 
 #endif
