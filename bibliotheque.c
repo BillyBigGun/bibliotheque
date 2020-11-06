@@ -4,7 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "bibliotheque.h"
+#include <unistd.h>
+#include <termios.h>
 
+
+char getch_linux(void);
 
 
 
@@ -22,14 +26,7 @@ int main()
 	// Initialisation de la bibliotheque
 	initialiser_bibliotheque(&bibli);
 	lire_fichier(&bibli);
-	afficher_bibliotheque(&bibli);
 
-	
-	
-
-	
-	
-	// ...
 
     do
     {
@@ -96,7 +93,6 @@ void lire_fichier(t_bibliotheque * pBibli)
 
 					//Determine le interger lu
 					int chiffre = atoi((ligne));
-					printf("%d\n", chiffre);
 					//Cree le tableau de livres
 					livres = (t_livre*)malloc(chiffre * sizeof(t_livre));
 					
@@ -170,7 +166,7 @@ void lire_fichier(t_bibliotheque * pBibli)
 		} while (caractere != EOF);
 
 		free(livres);
-		
+		printf("Le fichier a bien ete lu. La bibliothe est initialiser avec les informations du fichier %s\n", BIBLIO_FICHIER);
 	}
 	else
 	{
@@ -178,7 +174,9 @@ void lire_fichier(t_bibliotheque * pBibli)
 		printf("Impossible d'ouvrir le fichier biblio.txt");
 	}
 
-	//fclose(fichier);
+	fclose(fichier);
+
+	super_pause();
 
 #endif
 	
@@ -224,7 +222,9 @@ void simuler_lire_fichier(t_bibliotheque * pBibli)
 void super_pause()
 {
 	printf("Appuyez sur une touche pour continuer! \n");
-	//_getch();
+	getch_linux();
+
+	system("clear");
 }
 
 void retirer_sautligne(char * chaine)
@@ -257,6 +257,7 @@ void initialiser_bibliotheque(t_bibliotheque* pBibli)
 	}
 
 	initialiser_rapport(&(pBibli->rapport));
+	init_pile(&(pBibli->retours));
 }
 
 
@@ -309,9 +310,9 @@ void sauvegarder_fichier(t_bibliotheque* pBibli)
 	}
 	fclose(fichier);
 
+	super_pause();
 }
 
-//Trier selon le isbn
 void trier_livres(t_bibliotheque* pBibli)
 {
 	for (int i = 0; i < NB_GENRES; i++)
@@ -325,13 +326,17 @@ void trier_livres(t_bibliotheque* pBibli)
 				//si le livre actuel est plus petit, on swap
 				if(pBibli->livres[i][k].isbn < plusPetit.isbn)
 				{
-					t_livre temp = plusPetit;
-					pBibli->livres[i][k] = temp;
+					pBibli->livres[i][j] = pBibli->livres[i][k];
+					pBibli->livres[i][k] = plusPetit;
 
 				}
 			}
 		}
 	}
+
+	printf("Les livres sont maintenant trier selon le isbn dans la bibliotheque.\n");
+
+	super_pause();
 }
 
 void afficher_bibliotheque(t_bibliotheque* pBibli)
@@ -345,6 +350,8 @@ void afficher_bibliotheque(t_bibliotheque* pBibli)
 			afficher_livre(livre);
 		}
 	}
+
+	super_pause();
 }
 
 void generer_rapport(t_bibliotheque* pBibli)
@@ -365,7 +372,7 @@ void generer_rapport(t_bibliotheque* pBibli)
 
 	int nb_emprunt_total=0;
 
-for (i = 0; i < NB_GENRES; ++i) {
+	for (i = 0; i < NB_GENRES; ++i) {
 		for (j = 0; j < pBibli->nb_livres[i]; ++j) {
 			if ((pBibli->livres[i][j]).bEmprunte == EMPRUNT) 
 			{
@@ -379,11 +386,15 @@ for (i = 0; i < NB_GENRES; ++i) {
 	}
 
 
+	//affichage du rapport
 	printf("\n#################\n");
 	printf("Nb de livres: %d\n", pBibli->rapport.nb_livre);
 	printf("Nb Emprunts: %d\n", pBibli->rapport.nb_emprunts);
-	printf("#################\n");  //affichage du rapport
+	printf("#################\n");  
+
+	super_pause();
 }
+
 void retirer_livre(t_bibliotheque* pBibli)
 {
 	int ISBN;
@@ -416,7 +427,7 @@ void retirer_livre(t_bibliotheque* pBibli)
 
 		for (j; j < pBibli->nb_livres[i]; ++j)
 		{
-			if(j== NB_LIVRES_MAX_RANGEE-1)//Dans le cas ou les 100 livres sont utilise, je ne peux pas copier le livre (10) pour ecraser le livre 99
+			if(j== NB_LIVRES_MAX_RANGEE-1)//Dans le cas ou les 100 livres sont utilise, je ne peux pas copier le livre (100) pour ecraser le livre 99
 			 // car celui-ci nexiste pas dans notre tableau, ainsi je reinitialise le livre 99
 			{
 				initialiser_livre(&(pBibli->livres[i][NB_LIVRES_MAX_RANGEE-1]));
@@ -437,21 +448,42 @@ void retirer_livre(t_bibliotheque* pBibli)
 		return;
 	}
 
-
-	//----------------------------------------------
+	printf("Le livre a bien ete retire!\n");
+	super_pause();
 }
 
 void emprunter_livre(t_bibliotheque* pBibli)
 {
 
 	
-		int isbn;
-		printf("Entrer le ISBN du livre a emprunter : ");
-		scanf("%d", &isbn);
+	int isbn;
+	printf("Entrer le ISBN du livre a emprunter : ");
+	scanf("%d", &isbn);
+	printf("\n");
 
-		t_livre* livre = trouver_livre(pBibli, isbn);
-		if (livre != NULL)
-			livre->bEmprunte = 1;
+	t_livre* livre = trouver_livre(pBibli, isbn);
+	if (livre != NULL)
+	{
+		if(livre->bEmprunte == DISPONIBLE)
+		{
+			
+			livre->bEmprunte = EMPRUNT;
+			printf("Le livre est maintenant emprunte!\n");
+		}
+		else
+		{
+			printf("Ce livre n'est pas disponible\n");
+		}
+		
+
+	}
+	else
+	{
+		printf("Ce livre n'existe pas\n");
+	}
+
+	super_pause();
+		
 }
 
 t_livre* trouver_livre(t_bibliotheque * bibli, int isbn)
@@ -475,10 +507,15 @@ void gerer_retours(t_bibliotheque* pBibli)
 {
 	gerer_lundi_matin_retours(pBibli, &(pBibli->retours));
 	retourner_livres(pBibli, &(pBibli->retours));
+
+	printf("Tous les livres ont ete retournees dans la bibliotheque.\n");
+
+	super_pause();
 }
 
 void gerer_lundi_matin_retours(t_bibliotheque* bibli, t_pile* pPileRetours)
 {
+	int nbLivreEmprunter = 0;
 	//regarder tous les livres de la bibli
 	for (int i = 0; i < NB_GENRES; ++i) {
 		for (int j = 0; j < bibli->nb_livres[i]; ++j) {
@@ -486,27 +523,30 @@ void gerer_lundi_matin_retours(t_bibliotheque* bibli, t_pile* pPileRetours)
 				//empiler le livre qui a ete emprunte
 
 				empiler(pPileRetours, &(bibli->livres[i][j]));
-
+				nbLivreEmprunter++;
 			}
 		}
 	}
 
+	printf("La pile contients %d livres.\n", nbLivreEmprunter);
 }
+
 void retourner_livres(t_bibliotheque* bibli, t_pile* pPileRetours)
 {
 	
-		if (pPileRetours == NULL)
-		{
-			return;
-		}
-		t_livre* actuel = pPileRetours->premier;
+	if (pPileRetours == NULL)
+	{
+		return;
+	}
+	t_livre* actuel = pPileRetours->premier;
 
-		while (actuel != NULL)
-		{
-			actuel->bEmprunte = DISPONIBLE;
-			depiler(pPileRetours);
-		}
+	while (actuel != NULL)
+	{
+		actuel->bEmprunte = DISPONIBLE;
+		actuel = depiler(pPileRetours);
+	}
 	
+
 }
 
 void init_pile(t_pile* pile)
@@ -516,24 +556,28 @@ void init_pile(t_pile* pile)
 	
 void empiler(t_pile* pile, t_livre *livre)
 {
-		
-	if (pile == NULL )
+	if (pile == NULL)
 	{	
-		printf("probleme pile ");
+		printf("La pile n'existe pas\n");
 		return;
 	}
 
-		//gestion de la pile
-		livre->suivant = pile->premier;
-		pile->premier = livre;
+	//gestion de la pile
+	livre->suivant = pile->premier;
+	pile->premier = livre;
 			
 }
 
 t_livre* depiler(t_pile* pile)
 {
-	if (pile == NULL || pile->premier == NULL)
+	if (pile == NULL)
 	{
-		printf("probleme depile");
+		printf("La pile n'existe pas.\n");
+		return NULL;
+	}
+	else if(pile->premier == NULL)
+	{
+		printf("La pile est vide.\n");
 		return NULL;
 	}
 	
@@ -560,7 +604,7 @@ int demander_choix_menu()
 	printf("6 - Retourner Livres (Lundi Matin)\n");
 	printf("7 - Generer Rapport\n");
 	printf("8 - Sauvegarder Bibliotheque\n");
-	printf("9 - Trier Libres (bonus)\n");
+	printf("9 - Trier Livres (bonus)\n");
 	printf("0 - Quitter\n");
 	printf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n", 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205);
 	scanf("%d", &choix_menu);
@@ -636,11 +680,37 @@ void modifier_livre(t_bibliotheque* bibli)
 	livre->nb_pages = nombre_page;
 
 	printf("\nVous avez modifie le livre avec le ISBN: %d", ISBN);
-	printf("\n\nAppuye sur une touche pour continuer!");
+	
+	/*printf("\n\nAppuye sur une touche pour continuer!");
 
 	//2 scanf pour que ca fonctionne (1 pour )
 	char ch;
 	scanf("%c", &ch);
-	scanf("%c", &ch);
+	scanf("%c", &ch);*/
+
+	super_pause();
 
 }
+
+//https://stackoverflow.com/questions/7469139/what-is-the-equivalent-to-getch-getche-in-linux
+char getch_linux(void)
+{
+    char buf = 0;
+    struct termios old = {0};
+    fflush(stdout);
+    if(tcgetattr(0, &old) < 0)
+        perror("tcsetattr()");
+    old.c_lflag &= ~ICANON;
+    old.c_lflag &= ~ECHO;
+    old.c_cc[VMIN] = 1;
+    old.c_cc[VTIME] = 0;
+    if(tcsetattr(0, TCSANOW, &old) < 0)
+        perror("tcsetattr ICANON");
+    if(read(0, &buf, 1) < 0)
+        perror("read()");
+    old.c_lflag |= ICANON;
+    old.c_lflag |= ECHO;
+    if(tcsetattr(0, TCSADRAIN, &old) < 0)
+        perror("tcsetattr ~ICANON");
+    return buf;
+ }
